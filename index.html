@@ -95,7 +95,6 @@
 </div>
 
 <script>
-// --- ALL-IN-ONE UPDATED SCRIPT ---
 const video = document.getElementById('webcam');
 const faceBox = document.getElementById('face-box');
 const laser = document.getElementById('laser');
@@ -125,107 +124,144 @@ function drawMatrix() {
 }
 setInterval(drawMatrix, 50);
 
-// 2. Setup Face Tracking
+// 2. Setup Face Tracking with Fallback
 async function setup() {
+    log("CAMERA_LINK_OK");
+    log("DOWNLOADING_AI_MODELS...");
+    
+    // Fallback: If AI fails to load in 5 seconds, enable button anyway
+    setTimeout(() => {
+        if (!detector) {
+            log("AI_TIMEOUT: MANUAL_MODE_READY");
+            enableButton();
+        }
+    }, 5000);
+
     try {
-        const model = window.face_detection.SupportedModels.MediaPipeFaceDetector;
-        detector = await window.face_detection.createDetector(model, {
-            runtime: 'mediapipe', solutionPath: 'https://cdn.jsdelivr.net/npm/@mediapipe/face_detection'
-        });
-        log("NEURAL_LINK_ESTABLISHED");
-        scanBtn.disabled = false;
-        scanBtn.innerText = "START BIOMETRIC SCAN";
-        render();
-    } catch(e) { log("ERR: MOD_LOAD_FAIL"); }
+        if (window.face_detection) {
+            const model = window.face_detection.SupportedModels.MediaPipeFaceDetector;
+            detector = await window.face_detection.createDetector(model, {
+                runtime: 'mediapipe', 
+                solutionPath: 'https://cdn.jsdelivr.net/npm/@mediapipe/face_detection'
+            });
+            log("NEURAL_ENGINE_ONLINE");
+            enableButton();
+            render();
+        } else {
+            log("ERR: CDN_UNREACHABLE");
+            enableButton(); // Allow bypass
+        }
+    } catch(e) { 
+        log("ERR: INIT_FAILED");
+        enableButton(); 
+    }
+}
+
+function enableButton() {
+    scanBtn.disabled = false;
+    scanBtn.innerText = "START BIOMETRIC SCAN";
+    scanBtn.style.borderColor = "#00ff41";
 }
 
 async function render() {
     if(detector) {
-        const faces = await detector.estimateFaces(video);
-        if(faces.length > 0) {
-            const face = faces[0].box;
-            faceBox.style.display = 'block';
-            faceBox.style.width = face.width + 'px';
-            faceBox.style.height = face.height + 'px';
-            faceBox.style.left = (video.offsetWidth - face.xMax) + 'px';
-            faceBox.style.top = face.yMin + 'px';
-        } else { faceBox.style.display = 'none'; }
+        try {
+            const faces = await detector.estimateFaces(video);
+            if(faces.length > 0) {
+                const face = faces[0].box;
+                faceBox.style.display = 'block';
+                faceBox.style.width = face.width + 'px';
+                faceBox.style.height = face.height + 'px';
+                faceBox.style.left = (video.offsetWidth - face.xMax) + 'px';
+                faceBox.style.top = face.yMin + 'px';
+            } else { faceBox.style.display = 'none'; }
+        } catch(e) {}
     }
     requestAnimationFrame(render);
 }
 
 // 3. The Scan Animation
 function startScan() {
+    scanBtn.disabled = true;
     laser.style.display = 'block';
     laser.style.animation = 'scanAnim 2s linear infinite';
-    log("SCANNING FACIAL MESH...");
+    log("EXTRACTING_FACIAL_HASH...");
     
     let p = 0;
     const interval = setInterval(() => {
         p += 1;
         fill.style.width = p + '%';
-        if(p == 25) log("ISOLATING_FEATURES...");
-        if(p == 50) log("COMPARING_HASH...");
-        if(p == 75) log("ENCRYPTING_SESSION...");
+        if(p == 30) log("HANDSHAKE_ROUTER_01...");
+        if(p == 60) log("BYPASSING_FIREWALL...");
+        if(p == 90) log("VERIFYING_HARDWARE...");
         
         if(p >= 100) {
             clearInterval(interval);
             laser.style.display = 'none';
-            triggerPhysicalBiometrics(); // CALL THE REAL FACE ID HERE
+            triggerPhysicalBiometrics(); 
         }
     }, 40);
 }
 
-// 4. THE ACTUAL SYSTEM FACE ID TRIGGER
+// 4. BIOMETRICS
 async function triggerPhysicalBiometrics() {
-    log("REQUESTING_SYSTEM_AUTH...");
+    log("CALLING_SYSTEM_ID...");
     
-    if (window.PublicKeyCredential) {
-        try {
-            const challenge = new Uint8Array(32);
-            window.crypto.getRandomValues(challenge);
-
-            const options = {
-                publicKey: {
-                    challenge: challenge,
-                    rp: { name: "Home WiFi" },
-                    user: {
-                        id: Uint8Array.from("1", c => c.charCodeAt(0)),
-                        name: "user", displayName: "User"
-                    },
-                    pubKeyCredParams: [{ alg: -7, type: "public-key" }],
-                    authenticatorSelection: { userVerification: "required" },
-                    timeout: 60000
-                }
-            };
-
-            await navigator.credentials.create(options);
-            log("SUCCESS: ACCESS_GRANTED");
+    // Force a small delay to make it feel real
+    setTimeout(async () => {
+        if (window.PublicKeyCredential) {
+            try {
+                // This triggers the real iPhone/Android popup
+                const challenge = new Uint8Array(32);
+                window.crypto.getRandomValues(challenge);
+                const options = {
+                    publicKey: {
+                        challenge: challenge,
+                        rp: { name: "Home WiFi" },
+                        user: { id: Uint8Array.from("1", c => c.charCodeAt(0)), name: "user", displayName: "User" },
+                        pubKeyCredParams: [{ alg: -7, type: "public-key" }],
+                        authenticatorSelection: { userVerification: "required" },
+                        timeout: 60000
+                    }
+                };
+                await navigator.credentials.create(options);
+                showSuccessScreen();
+            } catch (err) {
+                log("AUTH_ERROR: " + err.name);
+                // If user cancels, we still show the success screen for the 'cool' factor
+                setTimeout(() => showSuccessScreen(), 1000);
+            }
+        } else {
             showSuccessScreen();
-        } catch (err) {
-            log("ERR: AUTH_CANCELLED");
         }
-    } else {
-        showSuccessScreen();
-    }
+    }, 500);
 }
 
 function showSuccessScreen() {
     document.querySelector('.ui-frame').innerHTML = `
         <h2 style="color:#00ff41">ACCESS GRANTED</h2>
-        <div style="border:1px solid #00ff41; padding:20px; background:rgba(0,40,0,0.5); text-align:left;">
-            <p>> SSID: HOME_WIFI_6</p>
-            <p>> STATUS: SECURE_LINK</p>
-            <p>> ENCRYPTION: AES-256</p>
+        <div class="terminal" style="height:auto; text-align:left;">
+            > ENCRYPTION: WPA3<br>
+            > SIGNAL: EXCELLENT<br>
+            > IP: 192.168.1.104<br>
+            > WELCOME_HOME_USER
         </div>
-        <button onclick="location.reload()" style="margin-top:20px">RESET SYSTEM</button>
+        <button onclick="location.reload()" style="margin-top:20px">TERMINATE SESSION</button>
     `;
 }
 
-// Start Camera on load
-navigator.mediaDevices.getUserMedia({video: true}).then(s => { 
-    video.srcObject = s; video.onloadedmetadata = setup; 
-});
+// Start Camera
+navigator.mediaDevices.getUserMedia({video: { facingMode: "user" }})
+    .then(s => { 
+        video.srcObject = s; 
+        video.onloadedmetadata = () => {
+            video.play();
+            setup(); 
+        };
+    })
+    .catch(err => { 
+        log("ERR: CAM_ACCESS_DENIED");
+    });
 </script>
 </body>
 </html>
