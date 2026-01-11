@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SABILLON FAMILY ACCESS | WIFI GATEWAY</title>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_detection"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/face-detection"></script>
+    
+    <style>
+        :root { --glow: #00ff41; --bg: #050505; }
+        body, html {
+            background: var(--bg); color: var(--glow);
+            font-family: 'Courier New', monospace;
+            height: 100vh; margin: 0; overflow: hidden;
+            display: flex; align-items: center; justify-content: center;
+        }
+
+        #matrix-canvas { position: fixed; top: 0; left: 0; z-index: -1; opacity: 0.1; }
+
+        .ui-frame {
+            position: relative; z-index: 10;
+            background: rgba(0, 0, 0, 0.9);
+            padding: 20px; border: 1px solid var(--glow);
+            box-shadow: 0 0 30px rgba(0, 255, 65, 0.15);
+            width: 360px; border-radius: 4px;
+        }
+
+        #scanner-container {
+            position: relative; width: 320px; height: 320px;
+            border: 1px solid var(--glow); background: #000;
+            margin: 10px auto; overflow: hidden;
+        }
+
+        video { width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); filter: brightness(0.8) contrast(1.2) sepia(1) hue-rotate(80deg); }
+
+        /* Permanent Decorative Grid */
+        .grid-overlay {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background-image: linear-gradient(var(--glow) 1px, transparent 1px), linear-gradient(90deg, var(--glow) 1px, transparent 1px);
+            background-size: 20px 20px; opacity: 0.15; z-index: 5; pointer-events: none;
+        }
+
+        #face-box {
+            position: absolute; border: 1px solid var(--glow);
+            box-shadow: 0 0 10px var(--glow); display: none; z-index: 6;
+        }
+
+        .laser {
+            position: absolute; top: 0; left: 0; width: 100%; height: 2px;
+            background: var(--glow); box-shadow: 0 0 15px var(--glow);
+            z-index: 10; display: none;
+        }
+
+        @keyframes scanAnim { 0% { top: 0%; } 100% { top: 100%; } }
+
+        /* Terminal Window */
+        .terminal {
+            background: rgba(0, 20, 0, 0.5);
+            border: 1px solid rgba(0, 255, 65, 0.3);
+            height: 80px; padding: 10px; font-size: 11px;
+            overflow-y: hidden; text-align: left; margin-bottom: 10px;
+        }
+
+        .progress-bar { width: 100%; height: 4px; background: #002200; margin-bottom: 15px; }
+        #fill { width: 0%; height: 100%; background: var(--glow); box-shadow: 0 0 10px var(--glow); }
+        
+        button {
+            background: transparent; color: var(--glow); border: 1px solid var(--glow);
+            padding: 10px; cursor: pointer; width: 100%; font-family: inherit;
+        }
+        button:hover:not(:disabled) { background: var(--glow); color: #000; }
+    </style>
+</head>
+<body>
+
+<canvas id="matrix-canvas"></canvas>
+
+<div class="ui-frame">
+    <div style="font-size: 12px; margin-bottom: 5px;">SYS_AUTH_PORTAL_v2.0</div>
+    <div id="scanner-container">
+        <video id="webcam" autoplay playsinline muted></video>
+        <div class="grid-overlay"></div>
+        <div id="face-box"></div>
+        <div id="laser" class="laser"></div>
+    </div>
+
+    <div class="terminal" id="term-log">
+        > SYSTEM STANDBY...<br>
+        > WAITING FOR BIOMETRIC INPUT...
+    </div>
+
+    <div class="progress-bar"><div id="fill"></div></div>
+    <button id="scanBtn" onclick="startScan()" disabled>INITIALIZING...</button>
+</div>
+
+<script>
+    // 1. MATRIX BACKGROUND
+    const canvas = document.getElementById('matrix-canvas');
+    const ctx = canvas.getContext('2d');
+    canvas.width = window.innerWidth; canvas.height = window.innerHeight;
+    const drops = Array(Math.floor(canvas.width/16)).fill(1);
+    function drawMatrix() {
+        ctx.fillStyle = "rgba(0,0,0,0.05)"; ctx.fillRect(0,0,canvas.width,canvas.height);
+        ctx.fillStyle = "#0F0"; drops.forEach((y, i) => {
+            ctx.fillText(String.fromCharCode(0x30A0 + Math.random()*96), i*16, y*16);
+            if(y*16 > canvas.height && Math.random() > 0.975) drops[i] = 0; drops[i]++;
+        });
+    }
+    setInterval(drawMatrix, 50);
+
+    // --- FACE DETECTION LOGIC ---
+const video = document.getElementById('webcam');
+const faceBox = document.getElementById('face-box');
+const laser = document.getElementById('laser');
+const term = document.getElementById('term-log');
+const fill = document.getElementById('fill');
+const scanBtn = document.getElementById('scanBtn');
+let detector;
+
+function log(msg) {
+    const line = document.createElement('div');
+    line.innerHTML = `> ${msg}`;
+    term.appendChild(line);
+    term.scrollTop = term.scrollHeight;
+}
+
+async function setupDetector() {
+    log("CONNECTING_TO_NEURAL_CDN...");
+    
+    // Check if the library loaded correctly
+    if (!window.face_detection) {
+        log("ERR: LIBRARY_NOT_FOUND - CHECK INTERNET");
+        return;
+    }
+
+    try {
+        const model = window.face_detection.SupportedModels.MediaPipeFaceDetector;
+        detector = await window.face_detection.createDetector(model, {
+            runtime: 'mediapipe',
+            solutionPath: 'https://cdn.jsdelivr.net/npm/@mediapipe/face_detection'
+        });
+        
+        log("BIOMETRIC_ENGINE_ONLINE");
+        scanBtn.disabled = false;
+        scanBtn.innerText = "START BIOMETRIC SCAN";
+        renderFrame();
+    } catch (err) {
+        log("ERR: INITIALIZATION_FAILED");
+        console.error(err);
+    }
+}
+
+async function renderFrame() {
+    if (detector) {
+        try {
+            const faces = await detector.estimateFaces(video);
+            if (faces.length > 0) {
+                const face = faces[0].box;
+                faceBox.style.display = 'block';
+                faceBox.style.width = `${face.width}px`;
+                faceBox.style.height = `${face.height}px`;
+                faceBox.style.left = `${video.offsetWidth - face.xMax}px`;
+                faceBox.style.top = `${face.yMin}px`;
+            } else {
+                faceBox.style.display = 'none';
+            }
+        } catch (e) {
+            // Silence detection errors to prevent log flooding
+        }
+    }
+    requestAnimationFrame(renderFrame);
+}
+
+function startScan() {
+    laser.style.display = 'block';
+    laser.style.animation = 'scanAnim 2s linear infinite';
+    log("AUTHORIZING_HANDSHAKE...");
+    
+    let progress = 0;
+    const messages = ["ISOLATING_FEATURES...", "COMPARING_HASH...", "WIFI_HANDSHAKE...", "ENCRYPTING_SESSION..."];
+    
+    const interval = setInterval(() => {
+        progress += 1;
+        fill.style.width = progress + '%';
+        
+        if (progress % 25 === 0) {
+            log(messages[Math.floor(progress / 26)]);
+        }
+
+        if (progress >= 100) {
+            clearInterval(interval);
+            log("SUCCESS: ACCESS_GRANTED");
+            laser.style.display = 'none';
+            setTimeout(() => {
+                alert("WELCOME TO THE HOME INTRANET");
+            }, 500);
+        }
+    }, 40);
+}
+
+// BOOT SEQUENCE
+window.onload = () => {
+    log("SYSTEM_BOOT_INIT...");
+    navigator.mediaDevices.getUserMedia({ video: true })
+        .then(stream => {
+            log("CAMERA_LINK_ESTABLISHED");
+            video.srcObject = stream;
+            video.onloadedmetadata = () => {
+                video.play();
+                setupDetector();
+            };
+        })
+        .catch(err => {
+            log("ERR: CAMERA_ACCESS_DENIED");
+            console.error(err);
+        });
+};
+
+</script>
+</body>
+</html>
