@@ -6,8 +6,32 @@
     <title>SABILLON FAMILY ACCESS | WIFI GATEWAY</title>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_detection"></script>
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/face-detection"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     
     <style>
+        /* Glitch Animation */
+@keyframes glitch {
+    0% { transform: translate(0); }
+    20% { transform: translate(-5px, 5px); }
+    40% { transform: translate(-5px, -5px); }
+    60% { transform: translate(5px, 5px); }
+    80% { transform: translate(5px, -5px); }
+    100% { transform: translate(0); }
+}
+
+.denied-glitch {
+    animation: glitch 0.2s infinite;
+    filter: sepia(100%) saturate(500%) hue-rotate(-50deg) !important;
+}
+
+.denied-overlay {
+    position: absolute;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(255, 0, 0, 0.2);
+    display: flex; align-items: center; justify-content: center;
+    color: white; font-weight: bold; font-size: 24px;
+    z-index: 20; text-shadow: 2px 2px #ff0000;
+}
         :root { --glow: #00ff41; --bg: #050505; }
         body, html {
             background: var(--bg); color: var(--glow);
@@ -207,51 +231,95 @@ function startScan() {
 async function triggerPhysicalBiometrics() {
     log("CALLING_SYSTEM_ID...");
     
-    // Force a small delay to make it feel real
-    setTimeout(async () => {
-        if (window.PublicKeyCredential) {
-            try {
-                // This triggers the real iPhone/Android popup
-                const challenge = new Uint8Array(32);
-                window.crypto.getRandomValues(challenge);
-                const options = {
-                    publicKey: {
-                        challenge: challenge,
-                        rp: { name: "Home WiFi" },
-                        user: { id: Uint8Array.from("1", c => c.charCodeAt(0)), name: "user", displayName: "User" },
-                        pubKeyCredParams: [{ alg: -7, type: "public-key" }],
-                        authenticatorSelection: { userVerification: "required" },
-                        timeout: 60000
-                    }
-                };
-                await navigator.credentials.create(options);
-                showSuccessScreen();
-            } catch (err) {
-                log("AUTH_ERROR: " + err.name);
-                // If user cancels, we still show the success screen for the 'cool' factor
-                setTimeout(() => showSuccessScreen(), 1000);
-            }
-        } else {
+    if (window.PublicKeyCredential) {
+        try {
+            const challenge = new Uint8Array(32);
+            window.crypto.getRandomValues(challenge);
+            const options = {
+                publicKey: {
+                    challenge: challenge,
+                    rp: { name: "Home WiFi" },
+                    user: { id: Uint8Array.from("1", c => c.charCodeAt(0)), name: "user", displayName: "User" },
+                    pubKeyCredParams: [{ alg: -7, type: "public-key" }],
+                    authenticatorSelection: { userVerification: "required" },
+                    timeout: 10000 // 10 second timeout
+                }
+            };
+            await navigator.credentials.create(options);
             showSuccessScreen();
+        } catch (err) {
+            log("SECURITY_BREACH_DETECTED");
+            triggerSelfDestruct();
         }
-    }, 500);
+    } else {
+        showSuccessScreen();
+    }
 }
 
+function triggerSelfDestruct() {
+    const frame = document.querySelector('.ui-frame');
+    
+    // Add glitch class
+    frame.classList.add('denied-glitch');
+    
+    // Add red overlay
+    const overlay = document.createElement('div');
+    overlay.className = 'denied-overlay';
+    overlay.innerHTML = 'ACCESS DENIED';
+    frame.appendChild(overlay);
+
+    // After 3 seconds, reset the page
+    setTimeout(() => {
+        location.reload();
+    }, 3000);
+}
 function showSuccessScreen() {
-    // 1. Set up the UI for the Success Screen
     document.querySelector('.ui-frame').innerHTML = `
-        <h2 style="color:#00ff41; letter-spacing: 2px;">SABILLON NETWORK ACTIVE</h2>
-        <canvas id="networkCanvas" style="width: 100%; height: 200px; background: #000; border: 1px solid #004400;"></canvas>
-        <div class="terminal" style="height:auto; text-align:left; margin-top:10px; font-size:10px;">
+        <h2 style="color:#00ff41; letter-spacing: 2px;">NETWORK_MAP_ACTIVE</h2>
+        <canvas id="networkCanvas" style="width: 100%; height: 180px; background: #000; border: 1px solid #004400;"></canvas>
+        
+        <div id="qr-container" style="display:none; background: white; padding: 10px; margin: 10px auto; width: 128px; border-radius: 4px;">
+            <div id="qrcode"></div>
+        </div>
+
+        <div class="terminal" id="success-log" style="height:auto; text-align:left; margin-top:10px; font-size:10px;">
             > ENCRYPTION: WPA3_SECURE<br>
             > NODES_DETECTED: 5 ACTIVE<br>
-            > WELCOME_HOME_USER
+            > STATUS: ONLINE
         </div>
-        <button onclick="location.reload()" style="margin-top:15px">DISCONNECT</button>
+
+        <div style="display: flex; gap: 10px; margin-top: 15px;">
+            <button id="guestBtn" onclick="generateGuestQR()" style="flex: 1;">GUEST_QR</button>
+            <button onclick="location.reload()" style="flex: 1;">EXIT</button>
+        </div>
     `;
 
-    // 2. Initialize the Network Map Animation
     initNetworkMap();
+}
+
+function generateGuestQR() {
+    const qrBox = document.getElementById('qr-container');
+    const log = document.getElementById('success-log');
+    const btn = document.getElementById('guestBtn');
+
+    // Wipe previous QR if it exists
+    document.getElementById('qrcode').innerHTML = "";
+
+    // Replace with your actual WiFi details:
+    // T: Encryption (WPA), S: SSID, P: Password
+    const wifiString = "WIFI:T:WPA;S:Your_WiFi_Name;P:Your_Password;;";
+
+    new QRCode(document.getElementById("qrcode"), {
+        text: wifiString,
+        width: 128,
+        height: 128,
+        colorDark : "#000000",
+        colorLight : "#ffffff",
+    });
+
+    qrBox.style.display = "block";
+    log.innerHTML = "> GENERATING_GUEST_TOKEN...<br>> QR_CODE_READY_FOR_SCAN";
+    btn.style.display = "none"; // Hide button after use
 }
 
 function initNetworkMap() {
