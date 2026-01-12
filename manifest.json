@@ -1,0 +1,9 @@
+{
+  "name": "Biometric WiFi Portal",
+  "short_name": "WiFiGate",
+  "start_url": "index.html",
+  "display": "standalone",
+  "background_color": "#050505",
+  "theme_color": "#00ff41",
+  "icons": [{ "src": "icon.png", "sizes": "512x512", "type": "image/png" }]
+}
