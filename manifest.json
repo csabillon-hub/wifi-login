@@ -1,9 +1,16 @@
 {
-  "name": "Biometric WiFi Portal",
-  "short_name": "WiFiGate",
+  "name": "Master Control WiFi",
+  "short_name": "MasterControl",
   "start_url": "index.html",
   "display": "standalone",
   "background_color": "#050505",
   "theme_color": "#00ff41",
-  "icons": [{ "src": "icon.png", "sizes": "512x512", "type": "image/png" }]
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/553/553315.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
 }
