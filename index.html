@@ -3,113 +3,65 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SECURE ACCESS | MASTER CONTROL</title>
+    <title>MASTER CONTROL | SECURE PORTAL</title>
+    
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="icon.png">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_detection"></script>
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/face-detection"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-    <link rel="manifest" href="manifest.json">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    
-    <style>
-        :root { --glow: #00ff41; --bg: #050505; --error: #ff0000; }
-        body, html {
-            background: var(--bg); color: var(--glow);
-            font-family: 'Courier New', monospace;
-            height: 100vh; margin: 0; overflow: hidden;
-            display: flex; align-items: center; justify-content: center;
-        }
 
-        #matrix-canvas { position: fixed; top: 0; left: 0; z-index: -1; opacity: 0.1; }
-
-        .ui-frame {
-            position: relative; z-index: 10;
-            background: rgba(0, 0, 0, 0.95);
-            padding: 20px; border: 1px solid var(--glow);
-            box-shadow: 0 0 30px rgba(0, 255, 65, 0.2);
-            width: 340px; border-radius: 4px; text-align: center;
-        }
-
-        #scanner-container {
-            position: relative; width: 300px; height: 320px;
-            border: 1px solid var(--glow); background: #000;
-            margin: 10px auto; overflow: hidden;
-        }
-
-        /* Neural Mesh AI */
-        #ai-entity {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background: black; z-index: 50;
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
-            transition: opacity 0.8s, transform 0.8s;
-        }
-        #ai-canvas { width: 100%; height: 100%; filter: drop-shadow(0 0 10px var(--glow)); }
-        #ai-speech { 
-            position: absolute; bottom: 15%; width: 80%;
-            font-size: 11px; letter-spacing: 2px; color: var(--glow); 
-            text-shadow: 0 0 8px var(--glow);
-        }
-
-        video { width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); filter: brightness(0.7) contrast(1.5) grayscale(1); }
-        .grid-overlay {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background-image: linear-gradient(var(--glow) 1px, transparent 1px), linear-gradient(90deg, var(--glow) 1px, transparent 1px);
-            background-size: 25px 25px; opacity: 0.15; z-index: 5;
-        }
-        #face-box { position: absolute; border: 1px solid var(--glow); box-shadow: 0 0 15px var(--glow); display: none; z-index: 6; }
-        .laser { position: absolute; top: 0; left: 0; width: 100%; height: 2px; background: var(--glow); box-shadow: 0 0 20px var(--glow); z-index: 10; display: none; animation: scanAnim 2s infinite linear; }
-        
-        @keyframes scanAnim { 0% { top: 0%; } 100% { top: 100%; } }
-
-        .terminal { background: #001100; border: 1px solid #004400; height: 60px; padding: 10px; font-size: 10px; overflow: hidden; text-align: left; margin-bottom: 10px; }
-        .progress-bar { width: 100%; height: 4px; background: #002200; margin-bottom: 15px; }
-        #fill { width: 0%; height: 100%; background: var(--glow); transition: width 0.1s; }
-        
-        button { background: transparent; color: var(--glow); border: 1px solid var(--glow); padding: 12px; cursor: pointer; width: 100%; font-family: inherit; font-weight: bold; }
-        button:hover:not(:disabled) { background: var(--glow); color: #000; }
-        button:disabled { opacity: 0.3; }
-
-        .denied-overlay {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background: var(--error); color: white; z-index: 100;
-            display: flex; align-items: center; justify-content: center;
-            font-size: 24px; font-weight: bold; letter-spacing: 5px;
-            animation: flash 0.2s infinite;
-        }
-        @keyframes flash { 0% { opacity: 1; } 50% { opacity: 0.7; } 100% { opacity: 1; } }
-
-        #qr-box { background: white; padding: 10px; margin: 10px auto; width: 128px; display: none; }
-        
-        /* Setup Screen */
-        #setup-screen {
-            display:none; position:fixed; z-index:1000; background:#000; inset:0; 
-            padding:30px; border: 2px solid var(--glow); margin: 20px; border-radius: 8px;
-        }
-    </style>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
+<div id="settings-trigger" onclick="toggleSettings()">⚙️</div>
 
+<div id="settings-panel">
+    <h3>> SYSTEM_MODES</h3>
+    <div class="setting-row">
+        <label>VISUAL_THEME:</label>
+        <select id="theme-select" onchange="updateTheme()">
+            <option value="green">MATRIX_GREEN</option>
+            <option value="red">EMERGENCY_RED</option>
+            <option value="blue">CORE_BLUE</option>
+        </select>
+    </div>
+    <div class="setting-row">
+        <label>AI_PERSONALITY:</label>
+        <select id="behavior-select" onchange="updateBehavior()">
+            <option value="standard">STANDARD</option>
+            <option value="hostile">HOSTILE</option>
+            <option value="friendly">FRIENDLY</option>
+        </select>
+    </div>
+    <button onclick="toggleSettings()" style="margin-top:20px;">CLOSE</button>
+</div>
 <canvas id="matrix-canvas"></canvas>
 
 <div id="setup-screen">
-    <h2 style="color:var(--glow); font-size: 18px;">> INITIAL_CONFIG_REQUIRED</h2>
-    <div style="text-align:left; margin-top:20px;">
-        <label style="font-size: 10px;">ENTER HOME SSID:</label>
-        <input type="text" id="ssid-input" placeholder="WiFi Name" style="width:100%; background:#111; color:var(--glow); border:1px solid var(--glow); padding:12px; margin: 10px 0 20px 0; font-family:inherit;">
+    <h2 style="color:var(--glow); font-size: 18px;">> INITIAL_CONFIG</h2>
+    <div class="form-group">
+        <label>SUBJECT NAME:</label>
+        <input type="text" id="name-input" placeholder="e.g. Kevin">
         
-        <label style="font-size: 10px;">ENTER PASSWORD:</label>
-        <input type="password" id="pass-input" placeholder="Password" style="width:100%; background:#111; color:var(--glow); border:1px solid var(--glow); padding:12px; margin: 10px 0 20px 0; font-family:inherit;">
+        <label>SSID (WIFI NAME):</label>
+        <input type="text" id="ssid-input" placeholder="Home_Network">
         
-        <button onclick="saveSettings()">WRITE TO MEMORY CORE</button>
+        <label>WIFI PASSWORD:</label>
+        <input type="password" id="pass-input" placeholder="Required">
+        
+        <button onclick="saveSettings()">INITIALIZE SYSTEM</button>
     </div>
 </div>
 
 <div class="ui-frame" id="main-frame">
-    <div style="font-size: 9px; opacity: 0.7; margin-bottom: 5px;">SYS_INTEGRITY: 100%</div>
+    <div class="sys-label">SYS_INTEGRITY: 100%</div>
     <div id="scanner-container">
         <div id="ai-entity">
             <canvas id="ai-canvas"></canvas>
-            <div id="ai-speech">WAITING FOR HANDSHAKE...</div>
+            <div id="ai-speech">WAITING...</div>
         </div>
         <video id="webcam" autoplay playsinline muted></video>
         <div class="grid-overlay"></div>
@@ -120,236 +72,9 @@
     <div class="terminal" id="term-log">> SYSTEM_BOOT_COMPLETE</div>
     <div id="qr-box"><div id="qrcode"></div></div>
     <div class="progress-bar"><div id="fill"></div></div>
-    <button id="scanBtn" onclick="identifyUser()" disabled>INITIALIZING AI...</button>
+    <button id="scanBtn" onclick="identifyUser()" disabled>INITIALIZING...</button>
 </div>
 
-<script>
-    const video = document.getElementById('webcam');
-    const faceBox = document.getElementById('face-box');
-    const laser = document.getElementById('laser');
-    const term = document.getElementById('term-log');
-    const fill = document.getElementById('fill');
-    const scanBtn = document.getElementById('scanBtn');
-    const aiSpeech = document.getElementById('ai-speech');
-    const aiEntity = document.getElementById('ai-entity');
-    let detector;
-
-    // --- VOICE OUTPUT ---
-    function speak(text) {
-        window.speechSynthesis.cancel();
-        const msg = new SpeechSynthesisUtterance(text);
-        msg.pitch = 0.4;
-        msg.rate = 0.9;
-        window.speechSynthesis.speak(msg);
-    }
-
-    // --- VOICE INPUT (LISTENING) ---
-    const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
-    recognition.continuous = true;
-    recognition.interimResults = false;
-    recognition.lang = 'en-US';
-
-    recognition.onresult = (event) => {
-        const result = event.results[event.results.length - 1][0].transcript.toLowerCase();
-        if (result.includes("who are you")) {
-            aiSpeech.innerText = "I AM MASTER CONTROL.";
-            speak("I am Master Control. The architect of this network.");
-        }
-    };
-
-    function log(msg) {
-        const line = document.createElement('div');
-        line.innerHTML = `> ${msg}`;
-        term.appendChild(line);
-        term.scrollTop = term.scrollHeight;
-    }
-
-    // Matrix Rain
-    const mCanvas = document.getElementById('matrix-canvas');
-    const mCtx = mCanvas.getContext('2d');
-    mCanvas.width = window.innerWidth; mCanvas.height = window.innerHeight;
-    const drops = Array(Math.floor(mCanvas.width/16)).fill(1);
-    function drawMatrix() {
-        mCtx.fillStyle = "rgba(0,0,0,0.05)"; mCtx.fillRect(0,0,mCanvas.width,mCanvas.height);
-        mCtx.fillStyle = "#0F0"; drops.forEach((y, i) => {
-            mCtx.fillText(String.fromCharCode(0x30A0 + Math.random()*96), i*16, y*16);
-            if(y*16 > mCanvas.height && Math.random() > 0.975) drops[i] = 0; drops[i]++;
-        });
-    }
-    setInterval(drawMatrix, 50);
-
-    // Neural AI Animation
-    function initAI() {
-        const canvas = document.getElementById('ai-canvas');
-        const ctx = canvas.getContext('2d');
-        canvas.width = canvas.offsetWidth; canvas.height = canvas.offsetHeight;
-        const points = [];
-        for (let i = 0; i < 45; i++) {
-            points.push({ x: Math.random()*canvas.width, y: Math.random()*canvas.height, vx: (Math.random()-0.5), vy: (Math.random()-0.5) });
-        }
-        function animate() {
-            ctx.clearRect(0,0,canvas.width,canvas.height);
-            ctx.strokeStyle = '#00ff41';
-            points.forEach((p, i) => {
-                p.x += p.vx; p.y += p.vy;
-                if(p.x<0 || p.x>canvas.width) p.vx*=-1;
-                if(p.y<0 || p.y>canvas.height) p.vy*=-1;
-                let dx = p.x - canvas.width/2; let dy = p.y - canvas.height/2;
-                if(Math.hypot(dx, dy*0.6) > 90) { p.vx -= dx*0.01; p.vy -= dy*0.01; }
-                for(let j=i+1; j<points.length; j++) {
-                    let p2 = points[j]; let d = Math.hypot(p.x-p2.x, p.y-p2.y);
-                    if(d < 55) {
-                        ctx.globalAlpha = 1 - (d/55); ctx.beginPath();
-                        ctx.moveTo(p.x, p.y); ctx.lineTo(p2.x, p2.y); ctx.stroke();
-                    }
-                }
-            });
-            if(aiEntity.style.display !== 'none') requestAnimationFrame(animate);
-        }
-        animate();
-    }
-
-    // --- BOOT LOGIC ---
-    function bootSystem() {
-        if (!localStorage.getItem('wifi_ssid')) {
-            document.getElementById('setup-screen').style.display = 'block';
-        } else {
-            navigator.mediaDevices.getUserMedia({video: { facingMode: "user" }})
-            .then(s => { 
-                video.srcObject = s; 
-                video.onloadedmetadata = setup;
-                recognition.start(); // Start listening
-            });
-        }
-    }
-
-    function saveSettings() {
-    const ssidInput = document.getElementById('ssid-input');
-    const passInput = document.getElementById('pass-input');
-    
-    // Reset styles
-    ssidInput.style.borderColor = "var(--glow)";
-    passInput.style.borderColor = "var(--glow)";
-
-    if(!ssidInput.value || !passInput.value) {
-        speak("Configuration incomplete. Information required.");
-        if(!ssidInput.value) ssidInput.style.borderColor = "var(--error)";
-        if(!passInput.value) passInput.style.borderColor = "var(--error)";
-        return; // Stop the function here
-    }
-
-    // If we have both, save and boot
-    localStorage.setItem('wifi_ssid', ssidInput.value);
-    localStorage.setItem('wifi_pass', passInput.value);
-    
-    speak("Configuration written to memory core. Restarting.");
-    setTimeout(() => location.reload(), 1500);
-}
-
-    async function setup() {
-        const h = new Date().getHours();
-        let greeting = h < 12 ? "Morning protocol active. Identify yourself." : "Who seeks entrance? Identify yourself.";
-        aiSpeech.innerText = greeting.toUpperCase();
-        initAI();
-        speak(greeting);
-        try {
-            const model = window.face_detection.SupportedModels.MediaPipeFaceDetector;
-            detector = await window.face_detection.createDetector(model, { runtime: 'mediapipe', solutionPath: 'https://cdn.jsdelivr.net/npm/@mediapipe/face_detection' });
-            scanBtn.disabled = false; scanBtn.innerText = "IDENTIFY";
-            render();
-        } catch(e) { scanBtn.disabled = false; scanBtn.innerText = "BYPASS"; }
-    }
-
-    function identifyUser() {
-        speak("Digitizing. Stay still.");
-        aiEntity.style.opacity = '0'; 
-        setTimeout(() => { aiEntity.style.display = 'none'; startScan(); }, 1000);
-    }
-
-    function startScan() {
-        laser.style.display = 'block';
-        let p = 0;
-        const interval = setInterval(() => {
-            p++; fill.style.width = p + '%';
-            if(p>=100) { clearInterval(interval); laser.style.display = 'none'; triggerAuth(); }
-        }, 40);
-    }
-
-    async function triggerAuth() {
-        if (window.PublicKeyCredential) {
-            try {
-                const challenge = new Uint8Array(32); window.crypto.getRandomValues(challenge);
-                const options = { publicKey: { challenge, rp: { name: "WiFi" }, user: { id: Uint8Array.from("1", c=>c.charCodeAt(0)), name: "u", displayName: "u" }, pubKeyCredParams: [{ alg: -7, type: "public-key" }], authenticatorSelection: { userVerification: "required" } } };
-                await navigator.credentials.create(options);
-                showSuccess();
-            } catch (err) { triggerDenied(); }
-        } else { showSuccess(); }
-    }
-
-    function triggerDenied() {
-        speak("Access Denied.");
-        const overlay = document.createElement('div');
-        overlay.className = 'denied-overlay'; overlay.innerText = 'ACCESS DENIED';
-        document.getElementById('main-frame').appendChild(overlay);
-        setTimeout(() => location.reload(), 3000);
-    }
-
-    function showSuccess() {
-        const ssid = localStorage.getItem('wifi_ssid');
-        speak("Access granted. Welcome home.");
-        document.getElementById('main-frame').innerHTML = `
-            <h2 style="color:#00ff41; font-size:14px;">NETWORK_SECURE</h2>
-            <canvas id="netCanvas" style="width:100%; height:150px; border:1px solid #004400;"></canvas>
-            <div id="qr-wrap" style="display:none; background:white; padding:10px; margin:10px auto; width:128px;"><div id="qrcode"></div></div>
-            <div class="terminal" style="height:auto;">> SSID: ${ssid}<br>> STATUS: ENCRYPTED</div>
-            <button onclick="genQR()">GUEST ACCESS</button>
-            <button onclick="wipeMemory()" style="margin-top:10px; border-color:#550000; color:#ff4444; font-size:9px;">WIPE_CONFIG</button>
-        `;
-        initNetMap();
-    }
-
-    function genQR() {
-        const ssid = localStorage.getItem('wifi_ssid');
-        const pass = localStorage.getItem('wifi_pass');
-        document.getElementById('qr-wrap').style.display = 'block';
-        new QRCode(document.getElementById("qrcode"), { text: `WIFI:T:WPA;S:${ssid};P:${pass};;`, width: 128, height: 128 });
-    }
-
-    function wipeMemory() {
-        if(confirm("Permanently delete WiFi configuration?")) {
-            localStorage.clear();
-            location.reload();
-        }
-    }
-
-    function initNetMap() {
-        const cvs = document.getElementById('netCanvas'); const cx = cvs.getContext('2d');
-        cvs.width = cvs.offsetWidth; cvs.height = cvs.offsetHeight;
-        const n = Array(5).fill().map((_,i)=>({ x: Math.random()*cvs.width, y: Math.random()*cvs.height, vx: Math.random()-0.5, vy: Math.random()-0.5, name: ["Device","PC","TV","IoT","Node"][i] }));
-        function d(){
-            cx.clearRect(0,0,cvs.width,cvs.height); cx.fillStyle="#0f0"; cx.beginPath(); cx.arc(cvs.width/2,cvs.height/2,5,0,7); cx.fill();
-            n.forEach(p=>{
-                p.x+=p.vx; p.y+=p.vy; if(p.x<0||p.x>cvs.width) p.vx*=-1; if(p.y<0||p.y>cvs.height) p.vy*=-1;
-                cx.strokeStyle="rgba(0,255,0,0.2)"; cx.beginPath(); cx.moveTo(cvs.width/2,cvs.height/2); cx.lineTo(p.x,p.y); cx.stroke();
-                cx.fillText(p.name, p.x+5, p.y);
-            });
-            requestAnimationFrame(d);
-        } d();
-    }
-
-    async function render() {
-        if(detector) {
-            const faces = await detector.estimateFaces(video);
-            if(faces.length > 0) {
-                const face = faces[0].box; faceBox.style.display = 'block';
-                faceBox.style.width = face.width + 'px'; faceBox.style.height = face.height + 'px';
-                faceBox.style.left = (video.offsetWidth - face.xMax) + 'px'; faceBox.style.top = face.yMin + 'px';
-            } else { faceBox.style.display = 'none'; }
-        }
-        requestAnimationFrame(render);
-    }
-
-    bootSystem();
-</script>
+<script src="script.js"></script>
 </body>
 </html>

@@ -1,0 +1,164 @@
+:root { 
+    --glow: #00ff41; 
+    --bg: #050505; 
+    --error: #ff0000; 
+}
+
+body, html {
+    background: var(--bg); color: var(--glow);
+    font-family: 'Courier New', monospace;
+    height: 100vh; margin: 0; overflow: hidden;
+    display: flex; align-items: center; justify-content: center;
+}
+
+#matrix-canvas { position: fixed; top: 0; left: 0; z-index: -1; opacity: 0.1; }
+
+.ui-frame {
+    position: relative; z-index: 10;
+    background: rgba(0, 0, 0, 0.95);
+    padding: 20px; border: 1px solid var(--glow);
+    box-shadow: 0 0 30px rgba(0, 255, 65, 0.2);
+    width: 340px; border-radius: 4px; text-align: center;
+}
+
+#scanner-container {
+    position: relative; width: 300px; height: 320px;
+    border: 1px solid var(--glow); background: #000;
+    margin: 10px auto; overflow: hidden;
+}
+
+/* AI ENTITY & PULSE */
+#ai-entity {
+    position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+    background: black; z-index: 50;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    transition: opacity 0.8s, transform 0.8s;
+}
+
+#ai-canvas { 
+    width: 100%; height: 100%; 
+    animation: neuralPulse 4s infinite ease-in-out;
+}
+
+@keyframes neuralPulse {
+    0%, 100% { filter: drop-shadow(0 0 5px var(--glow)); transform: scale(1); }
+    50% { filter: drop-shadow(0 0 15px var(--glow)); transform: scale(1.03); }
+}
+
+#ai-speech { 
+    position: absolute; bottom: 15%; width: 85%;
+    font-size: 11px; letter-spacing: 2px; color: var(--glow); 
+    text-shadow: 0 0 8px var(--glow);
+}
+
+/* UI ELEMENTS */
+video { width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); filter: grayscale(1) contrast(1.2); }
+.grid-overlay {
+    position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+    background-image: linear-gradient(var(--glow) 1px, transparent 1px), linear-gradient(90deg, var(--glow) 1px, transparent 1px);
+    background-size: 25px 25px; opacity: 0.1; z-index: 5;
+}
+
+#face-box { position: absolute; border: 1px solid var(--glow); box-shadow: 0 0 15px var(--glow); display: none; z-index: 6; }
+.laser { position: absolute; top: 0; left: 0; width: 100%; height: 2px; background: var(--glow); box-shadow: 0 0 20px var(--glow); z-index: 10; display: none; animation: scanAnim 2s infinite linear; }
+@keyframes scanAnim { 0% { top: 0%; } 100% { top: 100%; } }
+
+.terminal { background: #001100; border: 1px solid #004400; height: 60px; padding: 10px; font-size: 10px; overflow: hidden; text-align: left; margin-bottom: 10px; }
+.progress-bar { width: 100%; height: 4px; background: #002200; margin-bottom: 15px; }
+#fill { width: 0%; height: 100%; background: var(--glow); }
+
+button { background: transparent; color: var(--glow); border: 1px solid var(--glow); padding: 12px; cursor: pointer; width: 100%; font-family: inherit; font-weight: bold; margin-bottom: 5px; }
+button:hover:not(:disabled) { background: var(--glow); color: #000; }
+
+#setup-screen {
+    display:none; position:fixed; z-index:1000; background:#000; inset:0; 
+    padding:30px; border: 2px solid var(--glow); margin: 20px; border-radius: 8px;
+}
+#setup-screen input { width: 100%; background: #111; color: var(--glow); border: 1px solid var(--glow); padding: 12px; margin: 10px 0 20px 0; font-family: inherit; }
+
+.denied-overlay {
+    position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+    background: var(--error); color: white; z-index: 100;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 24px; font-weight: bold; animation: flash 0.2s infinite;
+}
+@keyframes flash { 0%, 100% { opacity: 1; } 50% { opacity: 0.7; } }
+
+/* --- NEURAL GLITCH EFFECT --- */
+.glitch-active {
+    animation: glitch-skew 0.4s infinite linear alternate-reverse;
+}
+
+@keyframes glitch-skew {
+    0% { transform: skew(2deg); filter: hue-rotate(0deg) contrast(1.5); }
+    20% { transform: skew(-3deg) scale(1.05); filter: hue-rotate(90deg) brightness(1.2); }
+    40% { transform: skew(5deg); filter: contrast(2); }
+    60% { transform: skew(-1deg); filter: hue-rotate(180deg); }
+    80% { transform: skew(3deg); filter: brightness(1.5); }
+    100% { transform: skew(0deg); filter: hue-rotate(0deg); }
+}
+
+/* Add a scanline overlay that flickers during glitch */
+.glitch-active::after {
+    content: "";
+    position: absolute;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background: repeating-linear-gradient(0deg, rgba(0,255,65,0.1) 0px, transparent 2px);
+    pointer-events: none;
+}
+/* Settings Icon */
+#settings-trigger {
+    position: fixed; top: 20px; right: 20px; z-index: 2000;
+    cursor: pointer; font-size: 24px; opacity: 0.5; transition: 0.3s;
+}
+#settings-trigger:hover { opacity: 1; filter: drop-shadow(0 0 10px var(--glow)); }
+
+/* Settings Panel */
+#settings-panel {
+    position: fixed; top: 0; right: -300px; width: 250px; height: 100%;
+    background: rgba(0, 0, 0, 0.95); border-left: 1px solid var(--glow);
+    z-index: 3000; padding: 25px; transition: 0.5s;
+    box-shadow: -10px 0 30px rgba(0,0,0,0.5);
+}
+#settings-panel.open { right: 0; }
+
+.setting-row { margin-bottom: 20px; text-align: left; }
+.setting-row label { font-size: 10px; display: block; margin-bottom: 5px; opacity: 0.7; }
+.setting-row select { 
+    width: 100%; background: #111; color: var(--glow); 
+    border: 1px solid var(--glow); padding: 8px; font-family: inherit; 
+}
+
+/* Theme Overrides */
+body.theme-red { --glow: #ff0000; }
+body.theme-blue { --glow: #00f2ff; }
+/* Custom Matrix Color based on Theme */
+body.theme-red #matrix-canvas {
+    filter: none;
+}
+
+body.theme-blue #matrix-canvas {
+    filter: none; 
+}
+#matrix-canvas {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: -1; /* Keeps it behind the UI */
+    display: block;
+}
+
+body {
+    background: #000; /* Standard black */
+    margin: 0;
+    padding: 0;
+}
+#matrix-canvas {
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: -1;
+    filter: blur(0.5px); /* Gives the lasers a slight photographic bleed */
+}
