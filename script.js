@@ -387,3 +387,102 @@ window.addEventListener('load', () => {
     startMatrix();
     bootSystem(); // Your existing boot function
 });
+let neuralSync = 100;
+let isScanning = false;
+let voiceKeyAuthorized = false;
+const ACCESS_PHRASE = "Success"; // Your secret voice key
+
+// --- 1. GHOST IN THE MACHINE LOGIC ---
+function triggerGhostEvent() {
+    const messages = ["I CAN SEE YOU", "ARE YOU ALONE?", "SYSTEM BLEED DETECTED", "HELP ME", "THE GRID IS LEAKING"];
+    if (Math.random() > 0.95) { // 5% chance every check
+        const msg = document.createElement('div');
+        msg.className = 'ghost-msg';
+        msg.style.left = Math.random() * 80 + '%';
+        msg.style.top = Math.random() * 80 + '%';
+        msg.innerText = messages[Math.floor(Math.random() * messages.length)];
+        document.body.appendChild(msg);
+        setTimeout(() => msg.remove(), 4000);
+    }
+}
+setInterval(triggerGhostEvent, 5000);
+
+// --- 2. THE SYNC METER LOGIC ---
+// Inside your renderFaceTracking() function, update it to this:
+async function renderFaceTracking() {
+    if(detector) {
+        const faces = await detector.estimateFaces(video);
+        const hud = document.getElementById('sync-hud');
+        
+        if(faces.length > 0) {
+            const face = faces[0].box;
+            faceBox.style.display = 'block';
+            faceBox.style.width = face.width + 'px';
+            faceBox.style.height = face.height + 'px';
+            faceBox.style.left = (video.offsetWidth - face.xMax) + 'px';
+            faceBox.style.top = face.yMin + 'px';
+
+            // If scanning, check if face is centered
+            if(isScanning) {
+                const centerX = face.xMin + (face.width/2);
+                const videoMid = video.offsetWidth / 2;
+                const offset = Math.abs(centerX - videoMid);
+                
+                if(offset > 50) { // Too far from center
+                    neuralSync -= 2;
+                    aiSpeech.innerText = "SIGNAL LOSS: RE-CENTER FACE";
+                } else {
+                    neuralSync = Math.min(100, neuralSync + 1);
+                }
+                document.getElementById('sync-fill').style.height = neuralSync + '%';
+            }
+        } else if (isScanning) {
+            neuralSync -= 5; // Rapid drop if no face seen
+            document.getElementById('sync-fill').style.height = neuralSync + '%';
+        }
+    }
+    requestAnimationFrame(renderFaceTracking);
+}
+
+// --- 3. THE VOICE KEY & AUTH SEQUENCE ---
+function startScan() {
+    isScanning = true;
+    neuralSync = 100;
+    document.getElementById('sync-hud').style.display = 'flex';
+    laser.style.display = 'block';
+    
+    let p = 0;
+    const interval = setInterval(() => {
+        p++; 
+        fill.style.width = p + '%';
+        
+        if(neuralSync < 20) {
+            clearInterval(interval);
+            triggerDenied("NEURAL_SYNC_FAILURE: CONNECTION_LOST");
+        }
+
+        if(p >= 100) {
+            clearInterval(interval);
+            laser.style.display = 'none';
+            askForVoiceKey();
+        }
+    }, 50);
+}
+
+function askForVoiceKey() {
+    isScanning = false;
+    speak("Biometrics confirmed. Stand by for vocal sync. Speak the access phrase.");
+    aiSpeech.innerText = "SAY: " + ACCESS_PHRASE.toUpperCase();
+    
+    // The recognition result handler will now look for the phrase
+    recognition.onresult = (event) => {
+        const input = event.results[event.results.length - 1][0].transcript.toLowerCase();
+        log("VOCAL_KEY: " + input);
+        
+        if (input.includes(ACCESS_PHRASE)) {
+            showSuccess();
+        } else {
+            triggerDenied("VOCAL_MATCH_FAILED");
+        }
+    };
+}

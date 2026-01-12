@@ -162,3 +162,24 @@ body {
     z-index: -1;
     filter: blur(0.5px); /* Gives the lasers a slight photographic bleed */
 }
+/* Sync Meter HUD */
+#sync-hud {
+    position: absolute; top: 10px; right: 10px;
+    width: 60px; height: 100px;
+    border: 1px solid var(--glow); background: rgba(0,0,0,0.5);
+    display: none; flex-direction: column-reverse; z-index: 60;
+}
+.sync-bar { width: 100%; background: var(--glow); transition: height 0.2s; }
+.sync-label { position: absolute; bottom: -15px; font-size: 8px; width: 100%; }
+
+/* Ghost Terminal Messages */
+@keyframes ghostFade {
+    0% { opacity: 0; transform: translateY(10px); }
+    10% { opacity: 0.5; color: #ff0000; }
+    90% { opacity: 0.5; }
+    100% { opacity: 0; transform: translateY(-20px); }
+}
+.ghost-msg {
+    position: fixed; font-size: 12px; pointer-events: none;
+    animation: ghostFade 4s forwards; z-index: 100; color: var(--glow);
+}
