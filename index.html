@@ -7,6 +7,9 @@
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_detection"></script>
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/face-detection"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <link rel="manifest" href="manifest.json">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     
     <style>
         :root { --glow: #00ff41; --bg: #050505; --error: #ff0000; }
@@ -221,14 +224,27 @@
     }
 
     function saveSettings() {
-        const ssid = document.getElementById('ssid-input').value;
-        const pass = document.getElementById('pass-input').value;
-        if(ssid && pass) {
-            localStorage.setItem('wifi_ssid', ssid);
-            localStorage.setItem('wifi_pass', pass);
-            location.reload();
-        }
+    const ssidInput = document.getElementById('ssid-input');
+    const passInput = document.getElementById('pass-input');
+    
+    // Reset styles
+    ssidInput.style.borderColor = "var(--glow)";
+    passInput.style.borderColor = "var(--glow)";
+
+    if(!ssidInput.value || !passInput.value) {
+        speak("Configuration incomplete. Information required.");
+        if(!ssidInput.value) ssidInput.style.borderColor = "var(--error)";
+        if(!passInput.value) passInput.style.borderColor = "var(--error)";
+        return; // Stop the function here
     }
+
+    // If we have both, save and boot
+    localStorage.setItem('wifi_ssid', ssidInput.value);
+    localStorage.setItem('wifi_pass', passInput.value);
+    
+    speak("Configuration written to memory core. Restarting.");
+    setTimeout(() => location.reload(), 1500);
+}
 
     async function setup() {
         const h = new Date().getHours();
