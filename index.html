@@ -2,87 +2,88 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MASTER CONTROL | SECURE PORTAL</title>
-    
-    <link rel="manifest" href="manifest.json">
-    <link rel="apple-touch-icon" href="icon.png">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>NEURAL_GATEWAY_V6_MASTER</title>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_detection"></script>
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/face-detection"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-
     <link rel="stylesheet" href="style.css">
 </head>
-<body>
-<div id="settings-trigger" onclick="toggleSettings()">⚙️</div>
+<body class="theme-red">
 
-<div id="settings-panel">
-    <h3>> SYSTEM_MODES</h3>
-    <div class="setting-row">
-        <label>VISUAL_THEME:</label>
-        <select id="theme-select" onchange="updateTheme()">
-            <option value="green">MATRIX_GREEN</option>
-            <option value="red">EMERGENCY_RED</option>
-            <option value="blue">CORE_BLUE</option>
-        </select>
-    </div>
-    <div class="setting-row">
-        <label>AI_PERSONALITY:</label>
-        <select id="behavior-select" onchange="updateBehavior()">
-            <option value="standard">STANDARD</option>
-            <option value="hostile">HOSTILE</option>
-            <option value="friendly">FRIENDLY</option>
-        </select>
-    </div>
-    <button onclick="toggleSettings()" style="margin-top:20px;">CLOSE</button>
-</div>
 <canvas id="matrix-canvas"></canvas>
 
-<div id="setup-screen">
-    <h2 style="color:var(--glow); font-size: 18px;">> INITIAL_CONFIG</h2>
-    <div class="form-group">
-        <label>SUBJECT NAME:</label>
-        <input type="text" id="name-input" placeholder="e.g. Kevin">
-        
-        <label>SSID (WIFI NAME):</label>
-        <input type="text" id="ssid-input" placeholder="Home_Network">
-        
-        <label>WIFI PASSWORD:</label>
-        <input type="password" id="pass-input" placeholder="Required">
-        
-        <button onclick="saveSettings()">INITIALIZE SYSTEM</button>
-    </div>
+<div id="settings-trigger" onclick="toggleSettings()">
+    <span class="glitch-text" data-text="⚙️ SYSTEM_OS">⚙️ SYSTEM_OS</span>
 </div>
 
-<div class="ui-frame" id="main-frame">
-    <div class="sys-label">SYS_INTEGRITY: 100%</div>
-    <div id="scanner-container">
-        <div id="sync-hud">
-        <div id="sync-fill" class="sync-bar"></div>
-        <div class="sync-label">SYNC</div>
+<div id="settings-panel">
+    <div class="panel-header">TERMINAL_CONFIGURATION</div>
+    <div class="setting-item">
+        <label>UPLINK_PROTOCOL</label>
+        <select id="theme-select" onchange="updateTheme()">
+            <option value="red">TRON_RED_LASER</option>
+            <option value="green">NEO_MATRIX_GREEN</option>
+            <option value="terminator">SKYNET_T800_VISION</option>
+        </select>
     </div>
-    
-    <div id="ai-entity">
-        <canvas id="ai-canvas"></canvas>
-        <div id="ai-speech">WAITING...</div>
-    </div>
-    <video id="webcam" autoplay playsinline muted></video>
-        <div id="ai-entity">
-            <canvas id="ai-canvas"></canvas>
-            <div id="ai-speech">WAITING...</div>
-        </div>
-        <video id="webcam" autoplay playsinline muted></video>
-        <div class="grid-overlay"></div>
-        <div id="face-box"></div>
-        <div id="laser" class="laser"></div>
+    <div class="setting-item">
+        <label>NEURAL_API_KEY</label>
+        <input type="password" id="api-key" placeholder="ENTER_ENCRYPTED_KEY..." 
+               style="width: 100%; background: #111; color: var(--glow); border: 1px solid var(--glow); padding: 10px; font-family: inherit;">
     </div>
 
-    <div class="terminal" id="term-log">> SYSTEM_BOOT_COMPLETE</div>
-    <div id="qr-box"><div id="qrcode"></div></div>
-    <div class="progress-bar"><div id="fill"></div></div>
-    <button id="scanBtn" onclick="identifyUser()" disabled>INITIALIZING...</button>
+    <div class="setting-item">
+        <label>AI_MODEL_CORE</label>
+        <select id="model-select">
+            <option value="gpt-4o">CYBER_DYNE_v4 (GPT-4o)</option>
+            <option value="claude-3">ANTHROPIC_UNIT_3 (CLAUDE)</option>
+            <option value="gemini-pro">NEURAL_GEMINI_PRO (GOOGLE)</option>
+        </select>
+    </div>
+    <div class="setting-item">
+        <label>VOICE_MODULATION</label>
+        <input type="range" min="0.1" max="2" step="0.1" value="0.6">
+    </div>
+    <button class="close-btn" onclick="toggleSettings()">EXIT_CONFIG</button>
+</div>
+
+<div class="master-frame">
+    <div class="hud-header">
+        <div class="header-left">LN: 12.09.84</div>
+        <div class="header-right">SIGNAL: HIGH</div>
+    </div>
+    
+    <div id="scanner-box">
+        <div id="ai-layer">
+            <canvas id="ai-canvas"></canvas>
+            <div id="ai-tag">NEURAL_SYNAPSE_INIT</div>
+        </div>
+        
+        <video id="webcam" autoplay playsinline muted></video>
+        
+        <div id="tron-fx"></div>
+        <div id="term-hud">
+            <div class="vignette"></div>
+            <div class="scanlines"></div>
+            <div class="thermal-glow"></div>
+        </div>
+
+        <div id="face-reticle">
+            <div class="bracket tl"></div><div class="bracket tr"></div>
+            <div class="bracket bl"></div><div class="bracket br"></div>
+            <div class="id-tag">SUBJECT_IDENTIFIED</div>
+        </div>
+        
+        <div id="laser-scanner"></div>
+    </div>
+
+    <div class="terminal-log" id="term-log">> READY_FOR_UPLINK</div>
+    <div class="progress-outer"><div id="progress-inner"></div></div>
+    
+    <div class="btn-group" style="position: relative; z-index: 9999;">
+        <button id="scanBtn" onclick="executeScan()" disabled>INITIALIZE_NEURAL_SWEEP</button>
+        <button id="authBtn" style="display:none;" onmousedown="authHold()">AUTHORIZE_BIO_LINK</button>
+    </div>
 </div>
 
 <script src="script.js"></script>
