@@ -13,69 +13,31 @@ let aiConfig = {
     model: 'gpt-4o'
 };
 
-function authHold() {
-    speak("Bio-signature verified.");
-    
-    // Forces the AI to stay in the tactical theme of your app
-    const tacticalPrompt = `SYSTEM_ROLE: You are an advanced tactical OS. 
-    USER_PROMPT: ${"The user has just bypassed security. Give them a brief status update."} 
-    CONSTRAINT: Keep it under 20 words.`;
-    
-    callNeuralAI(tacticalPrompt);
-}
-
-function speak(text) {
-    window.speechSynthesis.cancel();
-    const msg = new SpeechSynthesisUtterance(text);
-    msg.pitch = document.body.className.includes('terminator') ? 0.4 : 1.1;
-    msg.rate = 0.9;
-    log.innerText = "> " + text.toUpperCase();
-    window.speechSynthesis.speak(msg);
-}
 // --- SPEECH ENGINE ---
 function speak(text) {
     window.speechSynthesis.cancel();
     const msg = new SpeechSynthesisUtterance(text);
-    const aiBehavior = localStorage.getItem('ai_behavior') || 'standard';
+    const theme = document.body.className;
 
-    // Hostile mode sounds deeper and more menacing
-    msg.pitch = (aiBehavior === 'hostile') ? 0.2 : 0.4;
-    msg.rate = (aiBehavior === 'hostile') ? 0.75 : 0.85;
+    // Tactical pitch adjustment based on theme
+    msg.pitch = theme.includes('terminator') ? 0.3 : 0.6;
+    msg.rate = 0.85;
 
-    msg.onstart = () => aiEntity.classList.add('glitch-active');
-    msg.onend = () => aiEntity.classList.remove('glitch-active');
-
+    log.innerText = "> " + text.toUpperCase();
     window.speechSynthesis.speak(msg);
 }
 
-// --- VOICE RECOGNITION ---
-const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
-recognition.continuous = true;
-recognition.lang = 'en-US';
-
-recognition.onresult = (event) => {
-    const input = event.results[event.results.length - 1][0].transcript.toLowerCase();
-    if (input.includes("who are you")) {
-        // Trigger a quick "processing" glitch
-    aiEntity.classList.add('glitch-active');
-    setTimeout(() => aiEntity.classList.remove('glitch-active'), 500);
-        speak("I am Master Control. I manage this sector of the grid.");
-    } else if (input.includes("status")) {
-        speak("All systems nominal. WiFi Gateway is active.");
-    } else if (input.includes("hello")) {
-        speak(`Greetings ${userName}. I am online.`);
-    }
-};
-
-// RESTORED: Zig-Zag Lasers (Tron) & Hex/Hieroglyphs
+// --- BACKGROUND: ZIG-ZAGS & HIEROGLYPHS ---
 function startRain() {
     if(rainInterval) clearInterval(rainInterval);
-    const cvs = document.getElementById('matrix-canvas'); const ctx = cvs.getContext('2d');
+    const cvs = document.getElementById('matrix-canvas'); 
+    const ctx = cvs.getContext('2d');
     cvs.width = window.innerWidth; cvs.height = window.innerHeight;
     
-    tronTrails = Array(20).fill().map(() => ({
-        x: Math.random() * cvs.width, y: Math.random() * cvs.height,
-        dir: Math.floor(Math.random() * 4), length: 0
+    tronTrails = Array(25).fill().map(() => ({
+        x: Math.random() * cvs.width, 
+        y: Math.random() * cvs.height,
+        dir: Math.floor(Math.random() * 4)
     }));
 
     const drops = Array(Math.floor(cvs.width/20)).fill(1);
@@ -86,28 +48,26 @@ function startRain() {
         ctx.fillStyle = "rgba(0,0,0,0.15)"; ctx.fillRect(0,0,cvs.width,cvs.height);
         ctx.strokeStyle = glowColor; ctx.fillStyle = glowColor;
 
-        if(theme.includes('red')) { // ZIG-ZAG TRON
+        if(theme.includes('red')) { // TRON ZIG-ZAG
             tronTrails.forEach(t => {
-                ctx.beginPath(); ctx.lineWidth = 5; ctx.shadowBlur = 8; ctx.shadowColor = glowColor;
+                ctx.beginPath(); ctx.lineWidth = 4; ctx.shadowBlur = 10; ctx.shadowColor = glowColor;
                 ctx.moveTo(t.x, t.y);
                 const step = 15;
                 if(t.dir === 0) t.y -= step; else if(t.dir === 1) t.x += step;
                 else if(t.dir === 2) t.y += step; else if(t.dir === 3) t.x -= step;
                 ctx.lineTo(t.x, t.y); ctx.stroke();
-                if(Math.random() > 0.92 || t.x < 0 || t.x > cvs.width || t.y < 0 || t.y > cvs.height) {
-                    t.dir = Math.floor(Math.random() * 4);
-                    if(t.x < 0 || t.x > cvs.width || t.y < 0 || t.y > cvs.height) {
-                        t.x = Math.random() * cvs.width; t.y = Math.random() * cvs.height;
-                    }
+                if(Math.random() > 0.92) t.dir = Math.floor(Math.random() * 4);
+                if(t.x < 0 || t.x > cvs.width || t.y < 0 || t.y > cvs.height) {
+                    t.x = Math.random() * cvs.width; t.y = Math.random() * cvs.height;
                 }
             });
             ctx.shadowBlur = 0;
-        } else { // DATA FALL (Terminator Hex / Matrix)
+        } else { // DATA FALL (Terminator Hex / Matrix Hieroglyphs)
             drops.forEach((y, i) => {
                 const char = theme.includes('terminator') ? 
                     Math.floor(Math.random()*16).toString(16).toUpperCase() : 
                     String.fromCodePoint(0x13000 + Math.floor(Math.random()*90));
-                ctx.font = theme.includes('terminator') ? "18px 'Share Tech Mono'" : "19px monospace";
+                ctx.font = theme.includes('terminator') ? "18px 'Share Tech Mono'" : "19px serif";
                 ctx.fillText(char, i*22, y*22);
                 if(y*22 > cvs.height && Math.random() > 0.98) drops[i] = 0;
                 drops[i]++;
@@ -116,153 +76,198 @@ function startRain() {
     }, 45);
 }
 
-// RESTORED: Terminator Eye vs Neural Mesh
+// --- AI WINDOW: TERMINATOR EYE VS NEURAL MESH ---
 function initNeuralMesh() {
-    const cvs = document.getElementById('ai-canvas'); const ctx = cvs.getContext('2d');
+    const cvs = document.getElementById('ai-canvas'); 
+    const ctx = cvs.getContext('2d');
     cvs.width = 290; cvs.height = 290;
     const nodes = Array(80).fill().map(() => ({ x: Math.random()*290, y: Math.random()*290, vx: (Math.random()-0.5)*1.8, vy: (Math.random()-0.5)*1.8 }));
 
-    function animate() {
-        if(aiLayer.style.opacity === '0') return;
-        ctx.clearRect(0,0,290,290);
-        const theme = document.body.className;
-        const glowColor = getComputedStyle(document.body).getPropertyValue('--glow');
-        ctx.strokeStyle = glowColor;
+   function animate() {
+    // Note: Removed the "return if opacity 0" so it keeps calculating in the background
+    ctx.clearRect(0,0,290,290);
+    const theme = document.body.className;
+    
+    // If successful, override the color to a "Verified" Cyan
+    let glowColor = successGlow ? "#00ffff" : getComputedStyle(document.body).getPropertyValue('--glow');
+    
+    ctx.strokeStyle = glowColor;
+    ctx.shadowBlur = successGlow ? 15 : 0; // Add a glow effect during success
+    ctx.shadowColor = glowColor;
 
-        if (theme.includes('terminator')) {
-            const centerX = 145, centerY = 145, time = Date.now() * 0.002;
-            ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(centerX, centerY, 60 + Math.sin(time)*2, 0, Math.PI * 2); ctx.stroke();
-            ctx.lineWidth = 1;
-            for(let i=0; i<8; i++) {
-                const angle = (i / 8) * Math.PI * 2 + (time * 0.5);
-                ctx.beginPath(); ctx.moveTo(centerX + Math.cos(angle)*30, centerY + Math.sin(angle)*30);
-                ctx.lineTo(centerX + Math.cos(angle)*70, centerY + Math.sin(angle)*70); ctx.stroke();
-            }
-            const blink = Math.random() > 0.98 ? 0 : 1;
-            const pulse = (Math.sin(time * 4) * 10) + 20;
-            ctx.fillStyle = glowColor; ctx.shadowBlur = 15 * blink; ctx.shadowColor = glowColor;
-            ctx.beginPath(); ctx.arc(centerX, centerY, pulse * blink, 0, Math.PI * 2); ctx.fill(); ctx.shadowBlur = 0;
-        } else {
-            ctx.lineWidth = 0.8;
-            nodes.forEach((n) => {
-                n.x += n.vx; n.y += n.vy;
-                if(n.x<0 || n.x>290) n.vx*=-1; if(n.y<0 || n.y>290) n.vy*=-1;
-                nodes.forEach(n2 => {
-                    const d = Math.hypot(n.x-n2.x, n.y-n2.y);
-                    if(d < 48) { ctx.globalAlpha = 1-(d/48); ctx.beginPath(); ctx.moveTo(n.x, n.y); ctx.lineTo(n2.x, n2.y); ctx.stroke(); }
-                });
+    if (theme.includes('terminator')) {
+        // ... (Your Terminator Eye code here)
+    } else {
+        ctx.lineWidth = 0.8;
+        nodes.forEach((n) => {
+            n.x += n.vx; n.y += n.vy;
+            if(n.x<0 || n.x>290) n.vx*=-1; if(n.y<0 || n.y>290) n.vy*=-1;
+            nodes.forEach(n2 => {
+                const d = Math.hypot(n.x-n2.x, n.y-n2.y);
+                if(d < 48) { 
+                    ctx.globalAlpha = 1-(d/48); 
+                    ctx.beginPath(); ctx.moveTo(n.x, n.y); ctx.lineTo(n2.x, n2.y); ctx.stroke(); 
+                }
             });
-            ctx.globalAlpha = 1.0;
-        }
-        requestAnimationFrame(animate);
+        });
     }
+    requestAnimationFrame(animate);
+}
     animate();
 }
 
-// NEW: Privacy-First Boot (No Camera on Load)
+// --- SYSTEM CONTROLS ---
 async function bootSystem() {
-    startRain(); initNeuralMesh();
+    startRain(); 
+    initNeuralMesh();
     document.getElementById('scanBtn').disabled = false;
-    log.innerText = "> SYSTEM_STANDBY: AWAITING_UPLINK";
+    log.innerText = "> SYSTEM_STANDBY: AWAITING_BIO_SCAN";
 }
 
-// NEW: Camera Access & Scan Trigger
+let successGlow = false; // Tracks if the user was recently accepted
+
 async function executeScan() {
     if (!isSystemBooted) {
-        log.innerText = "> REQUESTING_HARDWARE_ACCESS...";
+        log.innerText = "> INITIALIZING_OPTICAL_HARDWARE...";
         try {
             const stream = await navigator.mediaDevices.getUserMedia({ video: true });
             video.srcObject = stream;
-            detector = await face_detection.createDetector(face_detection.SupportedModels.MediaPipeFaceDetector, { runtime: 'mediapipe', solutionPath: 'https://cdn.jsdelivr.net/npm/@mediapipe/face_detection' });
+            await video.play();
+            
+            const model = window.faceDetection || window.face_detection;
+            detector = await model.createDetector(model.SupportedModels.MediaPipeFaceDetector, { runtime: 'tfjs' });
+            
             isSystemBooted = true;
             runDetection();
-        } catch(e) { log.innerText = "> HARDWARE_DENIED"; return; }
+        } catch(e) { 
+            log.innerText = "> HARDWARE_FAILURE"; 
+            return; 
+        }
     }
-
+   // 1. Reveal Camera, Hide AI Box
     aiLayer.style.opacity = '0';
-    setTimeout(() => { aiLayer.style.display = 'none'; }, 800);
+    // Use a timeout to display: none after the fade so it doesn't block the video
+    setTimeout(() => { if(aiLayer.style.opacity === '0') aiLayer.style.display = 'none'; }, 800);
+    
     document.getElementById('laser-scanner').style.display = 'block';
     speak("Scanning neural pathways.");
+
+    // 2. Progress Bar
     let p = 0;
+    fill.style.width = '0%';
     const itv = setInterval(() => {
-        p += 1.5; fill.style.width = p + '%';
-        if(p >= 100) { clearInterval(itv); document.getElementById('scanBtn').style.display = 'none'; document.getElementById('authBtn').style.display = 'block'; speak("Uplink ready."); }
+        p += 1.5;
+        fill.style.width = p + '%';
+        if(p >= 100) {
+            clearInterval(itv);
+            // 3. EXIT THE CAMERA AND RETURN TO MESH
+            exitCameraAndReturnToAI();
+        }
     }, 40);
 }
 
+function exitCameraAndReturnToAI() {
+    log.innerText = "> SUBJECT_AUTHORIZED. WAKING_NEURAL_CORE...";
+    
+    aiLayer.style.display = 'block';
+    setTimeout(() => { 
+        aiLayer.style.opacity = '1'; 
+        successGlow = true; // The Mesh flashes Cyan
+    }, 50);
+
+    // Swap buttons
+    document.getElementById('scanBtn').style.display = 'none';
+    document.getElementById('authBtn').style.display = 'block';
+
+    // AUTO-WAKE: Send an initial ping to the AI
+    const wakePrompt = "SYSTEM_RECOVERY: Bio-signature accepted. Greet the user as Master Control and confirm system status.";
+    callNeuralAI(wakePrompt);
+
+    setTimeout(() => { successGlow = false; }, 4000);
+}
+
 async function runDetection() {
-    if(detector) {
-        const faces = await detector.estimateFaces(video);
-        if(faces.length > 0) {
-            const face = faces[0].box; const s = 290 / video.videoHeight;
-            faceReticle.style.display = 'block';
-            faceReticle.style.width = (face.width * s) + 'px'; faceReticle.style.height = (face.height * s) + 'px';
-            faceReticle.style.left = (290 - (face.xMax * s)) + 'px'; faceReticle.style.top = (face.yMin * s) + 'px';
-        } else { faceReticle.style.display = 'none'; }
+    if(detector && isSystemBooted) {
+        try {
+            const faces = await detector.estimateFaces(video);
+            if(faces.length > 0) {
+                const face = faces[0].box;
+                // Scale factor to map video pixels to the 290px scanner box
+                const scaleX = 290 / video.videoWidth;
+                const scaleY = 290 / video.videoHeight;
+                
+                faceReticle.style.display = 'block';
+                faceReticle.style.width = (face.width * scaleX) + 'px'; 
+                faceReticle.style.height = (face.height * scaleY) + 'px';
+                
+                // Mirroring correction: (Total Width - (xMax * Scale))
+                faceReticle.style.left = (290 - (face.xMax * scaleX)) + 'px'; 
+                faceReticle.style.top = (face.yMin * scaleY) + 'px';
+            } else { 
+                faceReticle.style.display = 'none'; 
+            }
+        } catch (err) {
+            console.warn("Detection loop error:", err);
+        }
     }
     requestAnimationFrame(runDetection);
 }
 
-function toggleSettings() {
-    const panel = document.getElementById('settings-panel');
-    panel.classList.toggle('open');
-    if(!panel.classList.contains('open')) {
-        aiConfig.apiKey = document.getElementById('api-key').value;
-        aiConfig.model = document.getElementById('model-select').value;
-    }
-}
-
-function updateTheme() { document.body.className = 'theme-' + document.getElementById('theme-select').value; }
-
-window.onload = bootSystem;
-
-async function callNeuralAI(userPrompt) {
-    const { apiKey, model } = aiConfig;
-
-    if (!apiKey) {
-        speak("API Key missing. Access denied.");
+async function authHold() {
+    // 1. Check for Key First
+    if (!aiConfig.apiKey) {
+        speak("Error. No uplink key detected.");
+        toggleSettings();
         return;
     }
 
-    log.innerText = "> UPLINKING_TO_" + model.toUpperCase();
-    let response;
-    let aiText = "";
+    // 2. Ensure the camera scan happened first
+    if (aiLayer.style.display !== 'none' && !successGlow) {
+        log.innerText = "> INITIATING_PRE_AUTH_SCAN...";
+        executeScan(); // Force the scan if they skipped it
+        return;
+    }
+
+    // 3. Visual "Crunch" and AI Call
+    document.body.style.filter = "invert(1) contrast(2)";
+    setTimeout(() => document.body.style.filter = "none", 150);
+    
+    speak("Bio-signature verified. Accessing neural core.");
+    
+    const tacticalPrompt = "System status report: Sector 7. Keep it under 20 words.";
+    await callNeuralAI(tacticalPrompt);
+}
+async function callNeuralAI(userPrompt) {
+    const { apiKey, model } = aiConfig;
+    
+    if (!apiKey) {
+        speak("Uplink failed. Key required.");
+        return;
+    }
+
+    log.innerText = "> UPLINKING_TO_" + model.toUpperCase() + "...";
 
     try {
-        if (model === 'gpt-4o') {
-            // OPENAI FORMAT
-            response = await fetch('https://api.openai.com/v1/chat/completions', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
-                body: JSON.stringify({
-                    model: "gpt-4o",
-                    messages: [{ role: "user", content: userPrompt }]
-                })
-            });
-            const data = await response.json();
-            aiText = data.choices[0].message.content;
+        let response;
+        let aiText = "";
 
-        } else if (model === 'claude-3') {
-            // ANTHROPIC FORMAT
-            response = await fetch('https://api.anthropic.com/v1/messages', {
+        // --- OPENAI (GPT-4o) ---
+        if (model === 'gpt-4o') {
+            response = await fetch('https://api.openai.com/v1/chat/completions', {
                 method: 'POST',
                 headers: { 
                     'Content-Type': 'application/json', 
-                    'x-api-key': apiKey,
-                    'anthropic-version': '2023-06-01',
-                    'dangerouslyAllowBrowser': 'true' // Only for client-side testing
+                    'Authorization': `Bearer ${apiKey}` 
                 },
                 body: JSON.stringify({
-                    model: "claude-3-opus-20240229",
-                    max_tokens: 1024,
-                    messages: [{ role: "user", content: userPrompt }]
+                    model: "gpt-4o",
+                    messages: [{ role: "user", content: userPrompt }],
+                    max_tokens: 50
                 })
             });
-            const data = await response.json();
-            aiText = data.content[0].text;
-
-        } else if (model === 'gemini-pro') {
-            // GOOGLE GEMINI FORMAT
+        } 
+        // --- GOOGLE GEMINI ---
+        else if (model === 'gemini-pro') {
             response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${apiKey}`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -270,14 +275,93 @@ async function callNeuralAI(userPrompt) {
                     contents: [{ parts: [{ text: userPrompt }] }]
                 })
             });
-            const data = await response.json();
-            aiText = data.candidates[0].content.parts[0].text;
         }
 
+        const data = await response.json();
+
+        // Error Handling for the Terminal
+        if (!response.ok) {
+            throw new Error(data.error?.message || "UPLINK_DENIED");
+        }
+
+        // Parse Response based on model
+        if (model === 'gpt-4o') aiText = data.choices[0].message.content;
+        else if (model === 'gemini-pro') aiText = data.candidates[0].content.parts[0].text;
+
+        // EXECUTE RESPONSE
         speak(aiText);
+        log.innerText = "> RESPONSE_RECEIVED";
 
     } catch (error) {
-        log.innerText = "> UPLINK_INTERRUPTED";
-        console.error("AI_ERROR:", error);
+        console.error("AI_CORE_ERROR:", error);
+        log.innerText = "> ERROR: " + error.message.toUpperCase();
+        speak("Uplink interrupted.");
+    }
+}
+successGlow = true; // Make it glow Cyan/Gold
+        aiLayer.style.display = 'block';
+        setTimeout(() => { 
+            aiLayer.style.opacity = '1'; 
+            successGlow = false; // Fade glow after 3 seconds
+        }, 3000);
+
+// --- PERSISTENT STORAGE LOGIC ---
+function toggleSettings() {
+    const panel = document.getElementById('settings-panel');
+    panel.classList.toggle('open');
+    
+    // If we are closing the panel, save the data
+    if(!panel.classList.contains('open')) {
+        aiConfig.apiKey = document.getElementById('api-key').value;
+        aiConfig.model = document.getElementById('model-select').value;
+        
+        // Encrypt-ish (Base64) just so it's not plain text in the dev tools
+        localStorage.setItem('neural_gateway_key', btoa(aiConfig.apiKey));
+        localStorage.setItem('neural_gateway_model', aiConfig.model);
+        
+        log.innerText = "> CONFIG_STASHED_IN_LOCAL_CACHE";
+        speak("Configuration updated.");
+    }
+}
+
+function updateTheme() { 
+    document.body.className = 'theme-' + document.getElementById('theme-select').value; 
+    startRain(); // Refresh canvas colors/styles
+}
+
+window.onload = bootSystem;
+aiLayer.ondblclick = () => {
+    speak("Voice link active. I am listening.");
+    recognition.start(); // This triggers the Speech Recognition logic we wrote earlier
+};
+// --- RESTORE DATA ON BOOT ---
+async function bootSystem() {
+    startRain(); 
+    initNeuralMesh();
+    
+    // Retrieve stored settings
+    const savedKey = localStorage.getItem('neural_gateway_key');
+    const savedModel = localStorage.getItem('neural_gateway_model');
+    
+    if (savedKey) {
+        aiConfig.apiKey = atob(savedKey); // Decode
+        document.getElementById('api-key').value = aiConfig.apiKey;
+    }
+    
+    if (savedModel) {
+        aiConfig.model = savedModel;
+        document.getElementById('model-select').value = savedModel;
+        updateTheme(); // Sync visuals to the stored model/theme
+    }
+
+    document.getElementById('scanBtn').disabled = false;
+    log.innerText = "> SYSTEM_STANDBY: AWAITING_BIO_SCAN";
+}
+function checkNeuralReadiness() {
+    if (window.faceDetection || window.face_detection) {
+        log.innerText = "> NEURAL_GATEWAY_ONLINE";
+        document.getElementById('scanBtn').style.borderColor = "var(--glow)";
+    } else {
+        setTimeout(checkNeuralReadiness, 500); // Check again in half a second
     }
 }
